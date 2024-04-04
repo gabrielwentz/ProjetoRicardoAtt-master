@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.TarefaCancelada;
+import com.example.demo.model.TarefaFinalizada;
 import com.example.demo.service.TarefaCanceladaService;
+import com.example.demo.service.TarefaFinalizadaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,18 +32,36 @@ public class TarefaCanceladaController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody TarefaCancelada tarefaCancelada) {
+
         Optional<TarefaCancelada> tarefaOptional = tarefaCanceladaService.buscaPorID(id);
+
         if (!tarefaOptional.isPresent()) {
             String mensagem = "O id informado não existe na base de dados";
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mensagem);
         }
 
         TarefaCancelada tarefaExistente = tarefaOptional.get();
-        tarefaExistente.setMotivoCancelamento(tarefaCancelada.getMotivoCancelamento());
 
-        TarefaCancelada tarefaAtualizada = tarefaCanceladaService.atualizar(id, tarefaExistente);
-        return ResponseEntity.ok(tarefaAtualizada);
+        if (tarefaCancelada.getNomeTarefa() != null) {
+            tarefaExistente.setNomeTarefa(tarefaCancelada.getNomeTarefa());
+        }
+        if (tarefaCancelada.getDataInicio() != null) {
+            tarefaExistente.setDataInicio(tarefaCancelada.getDataInicio());
+        }
+        if (tarefaCancelada.getDataFim() != null) {
+            tarefaExistente.setDataFim(tarefaCancelada.getDataFim());
+        }
+        if (tarefaCancelada.getMotivoCancelamento() != null) {
+            tarefaExistente.setMotivoCancelamento(tarefaCancelada.getMotivoCancelamento());
+        }
+
+        tarefaCanceladaService.atualizar(id, tarefaExistente);
+
+        return ResponseEntity.ok(tarefaExistente);
     }
+
+
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
@@ -56,6 +76,12 @@ public class TarefaCanceladaController {
     @GetMapping("/{id}")
     public Optional<TarefaCancelada> buscaporID(@PathVariable Long id){
         return this.tarefaCanceladaService.buscaPorID(id);
+    }
+
+    @GetMapping("/contagem")
+    public ResponseEntity<Long> contarTarefasCanceladas() {
+        long totalTarefasFinalizadas = tarefaCanceladaService.contarTarefasCanceladas();
+        return ResponseEntity.ok(totalTarefasFinalizadas);
     }
 
 }

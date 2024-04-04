@@ -8,7 +8,9 @@ public interface CrudService <T extends TiposTarefas>{
     List<T> listar();
     T criar (T entity);
 
-    T atualizar (Long id, T updatedEntity);
+
+    T atualizar(Long id, T objeto);
+
 
     boolean verificaID(Long id);
 

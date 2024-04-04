@@ -2,6 +2,9 @@ package com.example.demo.service;
 
 import com.example.demo.model.TarefaCancelada;
 import com.example.demo.repository.TarefaCanceladaRepository;
+import jakarta.transaction.Transactional;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +17,9 @@ public class TarefaCanceladaService implements CrudService<TarefaCancelada>{
     @Autowired
     private TarefaCanceladaRepository tarefaCanceladaRepository;
 
+    @Autowired
+    private Validator validator;
+
     @Override
     public List<TarefaCancelada> listar (){
         return tarefaCanceladaRepository.findAll();
@@ -24,13 +30,31 @@ public class TarefaCanceladaService implements CrudService<TarefaCancelada>{
         return tarefaCanceladaRepository.save(tarefaCancelada);
     }
 
-    @Override
+    @Transactional
     public TarefaCancelada atualizar(Long id, TarefaCancelada tarefaCancelada) {
-        if(verificaID(id)) {
-            tarefaCancelada.setId(id);
-            return tarefaCanceladaRepository.save(tarefaCancelada);
+        Optional<TarefaCancelada> tarefaOptional = buscaPorID(id);
+        if (tarefaOptional.isPresent()) {
+            TarefaCancelada tarefaExistente = tarefaOptional.get();
+
+            if (tarefaCancelada.getNomeTarefa() != null && !tarefaCancelada.getNomeTarefa().isEmpty()) {
+                tarefaExistente.setNomeTarefa(tarefaCancelada.getNomeTarefa());
+                tarefaExistente.setDataInicio(tarefaCancelada.getDataInicio());
+                tarefaExistente.setDataFim(tarefaCancelada.getDataFim());
+                tarefaExistente.setMotivoCancelamento(tarefaCancelada.getMotivoCancelamento());
+
+                try {
+                    validator.validate(tarefaExistente);
+                } catch (ConstraintViolationException e) {
+                    throw e;
+                }
+
+                return tarefaCanceladaRepository.save(tarefaExistente);
+            } else {
+                throw new IllegalArgumentException("O campo 'nomeTarefa' não pode ser nulo ou vazio.");
+            }
+        } else {
+            return null;
         }
-        return null;
     }
 
     @Override
@@ -50,6 +74,10 @@ public class TarefaCanceladaService implements CrudService<TarefaCancelada>{
 
     public Optional<TarefaCancelada> buscaPorID(Long id) {
         return this.tarefaCanceladaRepository.findById(id);
+    }
+
+    public long contarTarefasCanceladas() {
+        return tarefaCanceladaRepository.count();
     }
 
 }

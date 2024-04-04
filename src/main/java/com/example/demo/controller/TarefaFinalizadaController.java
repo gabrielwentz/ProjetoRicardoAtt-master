@@ -52,6 +52,14 @@ public class TarefaFinalizadaController {
     public Optional<TarefaFinalizada> buscaPorID(@PathVariable Long id) {
         return tarefaFinalizadaService.buscaPorID(id);
     }
+
+    @GetMapping("/contagem")
+    public ResponseEntity<Long> contarTarefasFinalizadas() {
+        long totalTarefasFinalizadas = tarefaFinalizadaService.contarTarefasFinalizadas();
+        return ResponseEntity.ok(totalTarefasFinalizadas);
+    }
+
 }
+
 
 

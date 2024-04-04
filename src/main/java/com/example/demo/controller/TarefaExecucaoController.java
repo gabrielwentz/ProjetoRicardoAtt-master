@@ -37,12 +37,32 @@ public class TarefaExecucaoController {
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody TarefaExecucao tarefaExecucao) {
-        if (tarefaExecucaoService.atualizar(id, tarefaExecucao) == null) {
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody TarefaExecucao tarefaExecucao) {
+        // Verifica se o atributo descricaoTarefa é nulo
+        if (tarefaExecucao.getDescricaoTarefa() == null) {
+            // Retorna um erro informando que o atributo descricaoTarefa não pode ser nulo
+            String mensagem = "O atributo 'descricaoTarefa' não pode ser nulo.";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(mensagem);
+        }
+
+        Optional<TarefaExecucao> tarefaOptional = tarefaExecucaoService.buscaPorID(id);
+
+        if (!tarefaOptional.isPresent()) {
             String mensagem = "O id informado não existe na base de dados";
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(mensagem);
         }
-        return ResponseEntity.ok(tarefaExecucao);
+
+        TarefaExecucao tarefaExistente = tarefaOptional.get();
+
+        // Atualiza os atributos da entidade com os valores da requisição
+        tarefaExistente.setDataInicio(tarefaExecucao.getDataInicio());
+        tarefaExistente.setDataFim(tarefaExecucao.getDataFim());
+        tarefaExistente.setDescricaoTarefa(tarefaExecucao.getDescricaoTarefa());
+
+        // Realiza a atualização da entidade
+        tarefaExecucaoService.atualizar(id, tarefaExistente);
+
+        return ResponseEntity.ok(tarefaExistente);
     }
 
     @DeleteMapping("/{id}")
@@ -59,5 +79,13 @@ public class TarefaExecucaoController {
     public Optional<TarefaExecucao> buscaPorID(@PathVariable Long id) {
         return tarefaExecucaoService.buscaPorID(id);
     }
+
+    @GetMapping("/contagem")
+    public ResponseEntity<Long> contarTarefasExecucao() {
+        long totalTarefasFinalizadas = tarefaExecucaoService.contarTarefasExecucao();
+        return ResponseEntity.ok(totalTarefasFinalizadas);
+    }
+
+
 }
 
